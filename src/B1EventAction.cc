@@ -132,7 +132,6 @@ void B1EventAction::EndOfEventAction(const G4Event *event)
 		{
 			auto hit = static_cast<ScintHit*>(hc->GetHit(i));
 			PDGEcode = hit->GetPDGCode();
-			G4cout<<"PDGE:"<<PDGEcode<<G4endl;
 			if (hit->GetPDGCode() == 2112)
 			{
 				fNeutron[0].push_back(hit->GetTime() / s);
