@@ -35,42 +35,108 @@
 #include "G4Event.hh"
 #include "G4RunManager.hh"
 #include "G4LogicalVolume.hh"
+#include "G4Gamma.hh"
+#include "G4Neutron.hh"
+#include "B1Analysis.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4Alpha.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-B1SteppingAction::B1SteppingAction(B1EventAction* eventAction)
-: G4UserSteppingAction(),
-  fEventAction(eventAction),
-  fScoringVolume(0)
-{}
+B1SteppingAction::B1SteppingAction(B1EventAction *eventAction) :
+		G4UserSteppingAction(), fEventAction(eventAction), fScoringVolume(0)
+{
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 B1SteppingAction::~B1SteppingAction()
-{}
+{
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void B1SteppingAction::UserSteppingAction(const G4Step* step)
+void B1SteppingAction::UserSteppingAction(const G4Step *step)
 {
+	auto particle = step->GetTrack()->GetParticleDefinition();
+	auto analysisManager = G4AnalysisManager::Instance();
+
+	if (particle == G4Alpha::Alpha()&&step->GetTrack()->GetParentID()==1)
+	{
+		fEventAction->SetIsFission(false);
+		if(step->GetPreStepPoint()->GetPosition()==step->GetTrack()->GetVertexPosition())
+		{
+			fEventAction->SetDecayTime(step->GetTrack()->GetGlobalTime());
+		}
+		//G4RunManager::GetRunManager()->AbortEvent();
+	}
+
+	//Save Prompt Gammas/ Neutorns after 100 seconds of decay
+	if (! fEventAction->GetIsFission() && (particle == G4Gamma::Gamma()))
+	{
+		if ((step->GetPreStepPoint()->GetGlobalTime()/s-fEventAction->GetDecayTime()/s)<100 && (step->IsFirstStepInVolume()))
+		{
+			analysisManager->FillNtupleIColumn(6, 0,
+									G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID());
+			analysisManager->FillNtupleDColumn(6, 1,
+									step->GetPreStepPoint()->GetKineticEnergy() / MeV);
+			analysisManager->FillNtupleDColumn(6, 2,
+												step->GetTrack()->GetParentID());
+							analysisManager->AddNtupleRow(6);
+		}
+	}
+
+	if (step->IsFirstStepInVolume())
+	{
+		if (!fScoringVolume)
+		{
+			const B1DetectorConstruction *detectorConstruction =
+					static_cast<const B1DetectorConstruction*>(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
+			fScoringVolume = detectorConstruction->GetScoringVolume();
+		}
+		G4LogicalVolume *volume =
+				step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetLogicalVolume();
+
+		if (volume == fScoringVolume)
+		{
+
+			if (particle == G4Neutron::Neutron())
+			{
+				fEventAction->AddNeutron();
+				analysisManager->FillNtupleDColumn(4, 0,
+						step->GetPreStepPoint()->GetKineticEnergy() / MeV);
+				analysisManager->AddNtupleRow(4);
+
+				analysisManager->FillNtupleIColumn(5, 0,
+						G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID());
+				analysisManager->FillNtupleDColumn(5, 1,
+						step->GetPreStepPoint()->GetKineticEnergy() / MeV);
+				analysisManager->AddNtupleRow(5);
+			}
+			if (particle == G4Gamma::Gamma())
+			{
+				fEventAction->AddGamma();
+				analysisManager->FillNtupleDColumn(3, 0,
+						step->GetPreStepPoint()->GetKineticEnergy() / MeV);
+				analysisManager->AddNtupleRow(3);
+			}
+
+		}
+	}
 	/*
-  if (!fScoringVolume) { 
-    const B1DetectorConstruction* detectorConstruction
-      = static_cast<const B1DetectorConstruction*>
-        (G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-    fScoringVolume = detectorConstruction->GetScoringVolume();   
-  }
 
-  // get volume of the current step
-  G4LogicalVolume* volume 
-    = step->GetPreStepPoint()->GetTouchableHandle()
-      ->GetVolume()->GetLogicalVolume();
-      
-  // check if we are in scoring volume
-  if (volume != fScoringVolume) return;
+	 }
 
-  // collect energy deposited in this step
-  G4double edepStep = step->GetTotalEnergyDeposit();
-  fEventAction->AddEdep(edepStep);  */
+	 // get volume of the current step
+	 G4LogicalVolume* volume
+	 = step->GetPreStepPoint()->GetTouchableHandle()
+	 ->GetVolume()->GetLogicalVolume();
+
+	 // check if we are in scoring volume
+	 if (volume != fScoringVolume) return;
+
+	 // collect energy deposited in this step
+	 G4double edepStep = step->GetTotalEnergyDeposit();
+	 fEventAction->AddEdep(edepStep);  */
 
 }
 

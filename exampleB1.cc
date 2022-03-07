@@ -54,7 +54,7 @@ int main(int argc,char** argv)
 
   // Optionally: choose a different Random engine...
   // G4Random::setTheEngine(new CLHEP::MTwistEngine);
-  
+  G4Random::setTheEngine(new CLHEP::MTwistEngine);
   // Construct the default run manager
   //
   auto* runManager =
@@ -67,7 +67,7 @@ int main(int argc,char** argv)
 
   // Physics list
   G4VModularPhysicsList* physicsList = new QGSP_BERT_HP;
-  physicsList->SetVerboseLevel(1);
+  physicsList->SetVerboseLevel(2);
   physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
   runManager->SetUserInitialization(physicsList);
     

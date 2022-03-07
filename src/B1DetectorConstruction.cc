@@ -93,19 +93,15 @@ G4VPhysicalVolume* B1DetectorConstruction::Construct()
 	fLogicalVolumes[0] = new G4LogicalVolume(scnit1Solid1, scint_mat, "scint1Logical");
 	fLogicalVolumes[1] = new G4LogicalVolume(scnit1Solid1, scint_mat, "scint2Logical");
 	auto position1 = G4ThreeVector((95.23 - 52 / 2) * mm, 0, 0);
-	new G4PVPlacement(0, position1, fLogicalVolumes[0], "scint1Phys", logicWorld, false, 0,
-			checkOverlaps);
-	new G4PVPlacement(0, -position1, fLogicalVolumes[1], "scint2Phys", logicWorld, false, 0,
-			checkOverlaps);
+	new G4PVPlacement(0, position1, fLogicalVolumes[0], "scint1Phys", logicWorld, false, 0,checkOverlaps);
+	new G4PVPlacement(0, -position1, fLogicalVolumes[1], "scint2Phys", logicWorld, false, 1,checkOverlaps);
 
 	auto scnit1Solid2 = new G4Box("scintLarge", 29.2 * mm / 2, 28.8 * mm / 2, 100.68 * mm / 2);
 	fLogicalVolumes[2] = new G4LogicalVolume(scnit1Solid2, scint_mat, "scint3Logical");
 	fLogicalVolumes[3] = new G4LogicalVolume(scnit1Solid2, scint_mat, "scint4Logical");
 	auto position2 = G4ThreeVector(0, (95.23 - 52 / 2) * mm, 0);
-	new G4PVPlacement(0, position2, fLogicalVolumes[2], "scint3Phys", logicWorld, false, 0,
-			checkOverlaps);
-	new G4PVPlacement(0, -position2, fLogicalVolumes[3], "scint4Phys", logicWorld, false, 0,
-			checkOverlaps);
+	new G4PVPlacement(0, position2, fLogicalVolumes[2], "scint3Phys", logicWorld, false, 0,checkOverlaps);
+	new G4PVPlacement(0, -position2, fLogicalVolumes[3], "scint4Phys", logicWorld, false, 1,checkOverlaps);
 
 	return physWorld;
 }

@@ -38,42 +38,42 @@
 #include "G4ParticleDefinition.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
+#include "G4IonTable.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-B1PrimaryGeneratorAction::B1PrimaryGeneratorAction()
-: G4VUserPrimaryGeneratorAction(),
-  fParticleGun(0)
+B1PrimaryGeneratorAction::B1PrimaryGeneratorAction() :
+		G4VUserPrimaryGeneratorAction(), fParticleGun(0)
 {
-  G4int n_particle = 1;
-  fParticleGun  = new G4ParticleGun(n_particle);
+	G4int n_particle = 1;
+	fParticleGun = new G4ParticleGun(n_particle);
 
-  // default particle kinematic
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4String particleName;
-  G4ParticleDefinition* particle
-    = particleTable->FindParticle(particleName="neutron");
-  fParticleGun->SetParticleDefinition(particle);
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,1.,0.));
-  fParticleGun->SetParticleEnergy(1.*MeV);
+	// default particle kinematic
+	G4ParticleTable *particleTable = G4ParticleTable::GetParticleTable();
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 B1PrimaryGeneratorAction::~B1PrimaryGeneratorAction()
 {
-  delete fParticleGun;
+	delete fParticleGun;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void B1PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
+void B1PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 {
-  
-  
-  fParticleGun->SetParticlePosition(G4ThreeVector(0,0,(54.4-100.5/2)*mm));
 
-  fParticleGun->GeneratePrimaryVertex(anEvent);
+	fParticleGun->SetParticlePosition(G4ThreeVector(0, 0, (54.4 - 100.5 / 2) * mm));
+	G4ParticleDefinition *ion = G4IonTable::GetIonTable()->GetIon(98, 252, 0);
+	//ion->SetPDGLifeTime(0);
+	fParticleGun->SetParticleDefinition(ion);
+	fParticleGun->SetParticleCharge(0);
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 1., 0.));
+	fParticleGun->SetParticleEnergy(0. * MeV);
+
+	fParticleGun->GeneratePrimaryVertex(anEvent);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

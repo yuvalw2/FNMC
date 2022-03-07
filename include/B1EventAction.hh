@@ -51,18 +51,29 @@ class B1EventAction : public G4UserEventAction
 
     void AddEdep(G4double edep) { fEdep += edep; }
 
+    void AddNeutron(){fNneutrons+=1;}
+    void AddGamma(){fNgammas+=1;}
 
+    void SetIsFission(bool b){fIsFission = b;}
+    bool GetIsFission(){return fIsFission;}
+
+    void SetDecayTime(G4double time) { fissionTime =time; }
+    G4double GetDecayTime() { return fissionTime; }
 
     std::vector<G4double>& GetGammaVectors(int i){return fGamma[i];}
     std::vector<G4double>& GetNeutronVectors(int i){return fNeutron[i];}
   private:
     G4double     fEdep;
 
-    std::array<std::vector<G4double>,3> fNeutron;
-    std::array<std::vector<G4double>,3> fGamma;
+    std::array<std::vector<G4double>,4> fNeutron;
+    std::array<std::vector<G4double>,4> fGamma;
 
     // hit collections Ids
 	std::array<G4int, kDim> fScintHCID;
+	G4int fNneutrons;
+	G4int fNgammas;
+	bool fIsFission;
+	G4double fissionTime;
 
 };
 

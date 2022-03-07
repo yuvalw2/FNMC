@@ -41,7 +41,7 @@ using std::vector;
 #include "G4SystemOfUnits.hh"
 #include "G4ios.hh"
 #include "B1Analysis.hh"
-
+#include <numeric>
 #include "ScintHit.hh"
 
 namespace
@@ -76,11 +76,13 @@ G4VHitsCollection* GetHC(const G4Event *event, G4int collId)
 B1EventAction::B1EventAction() :
 		G4UserEventAction(), fEdep(0.), fNeutron
 		{
-		{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0),std::vector<G4double>(0, 0.0) } }, fGamma
+		{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0), std::vector<G4double>(0,
+				0.0),std::vector<G4double>(0, 0.0) } }, fGamma
 		{
-		{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0),std::vector<G4double>(0, 0.0) } }, fScintHCID
+		{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0), std::vector<G4double>(0,
+				0.0),std::vector<G4double>(0, 0.0) } }, fScintHCID
 		{
-		{ -1, -1, -1, -1 } }
+		{ -1, -1, -1, -1 } }, fNneutrons(0), fNgammas(0),fIsFission(true),fissionTime(0.)
 {
 }
 
@@ -95,7 +97,9 @@ B1EventAction::~B1EventAction()
 void B1EventAction::BeginOfEventAction(const G4Event*)
 {
 	fEdep = 0.;
-
+	fNneutrons = fNgammas = 0;
+	fIsFission=true;
+	fissionTime=0.;
 	if (fScintHCID[0] == -1)
 	{
 		auto sdManager = G4SDManager::GetSDMpointer();
@@ -112,16 +116,27 @@ void B1EventAction::BeginOfEventAction(const G4Event*)
 		}
 	}
 	fNeutron =
-	{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0),std::vector<G4double>(0, 0.0) };
+	{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0),std::vector<G4double>(0, 0.0) };
 	fGamma =
-	{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0),std::vector<G4double>(0, 0.0) };
+	{ std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0), std::vector<G4double>(0, 0.0),std::vector<G4double>(0, 0.0) };
 }
+struct PTrack
+{
+	std::vector<G4double> times;
+	std::vector<G4double> energies;
+	G4int PDGcode = -1;
+	G4int detector_id = -1;
+
+};
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void B1EventAction::EndOfEventAction(const G4Event *event)
 {
 	G4int PDGEcode;
+	int trackID;
 	G4bool add_row = false;
+
+	// Old Analysis
 	for (G4int iDet = 0; iDet < kDim; ++iDet)
 	{
 		auto hc = GetHC(event, fScintHCID[iDet]);
@@ -137,6 +152,7 @@ void B1EventAction::EndOfEventAction(const G4Event *event)
 				fNeutron[0].push_back(hit->GetTime() / s);
 				fNeutron[1].push_back(hit->GetEdep() / MeV);
 				fNeutron[2].push_back(iDet);
+				fNeutron[3].push_back(hit->GetTrackID());
 				add_row = true;
 			}
 			if (hit->GetPDGCode() == 22)
@@ -144,64 +160,24 @@ void B1EventAction::EndOfEventAction(const G4Event *event)
 				fGamma[0].push_back(hit->GetTime() / s);
 				fGamma[1].push_back(hit->GetEdep() / MeV);
 				fGamma[2].push_back(iDet);
+				fGamma[3].push_back(hit->GetTrackID());
 				add_row = true;
 			}
 		}
 	}
+	auto analysisManager = G4AnalysisManager::Instance();
 	if (add_row)
 	{
-		auto analysisManager = G4AnalysisManager::Instance();
 		analysisManager->AddNtupleRow();
 	}
-	/*
-	 G4int copyNumber, energy_hits, time_hits;
-	 G4double time, timeVsq, eDepP, eDepE, PDGEcode;
-	 bool any_hit = false;
-	 auto analysisManager = G4AnalysisManager::Instance();
-	 for (G4int iDet = 0; iDet < kDim; ++iDet)
-	 {
-	 time = timeVsq = eDepP = eDepE = 0.;
-	 energy_hits = time_hits = 0;
+	if (fIsFission)
+	{
+		analysisManager->FillNtupleDColumn(1, 0, fNneutrons);
+		analysisManager->AddNtupleRow(1);
+		analysisManager->FillNtupleDColumn(2, 0, fNgammas);
+		analysisManager->AddNtupleRow(2);
+	}
 
-	 auto hc = GetHC(event, fScintHCID[iDet]);
-	 if (!hc)
-	 return; //CHECK THIS
-
-	 for (unsigned int i = 0; i < hc->GetSize(); ++i)
-	 {
-	 auto hit = static_cast<ScintHit*>(hc->GetHit(i));
-	 PDGEcode = hit->GetPDGCode();
-	 if (PDGEcode == 2212)
-	 {
-	 eDepP += hit->GetEdep();
-	 energy_hits += 1;
-	 }
-	 if (PDGEcode == 22 || PDGEcode == 11 || PDGEcode == -11)
-	 {
-	 eDepE += hit->GetEdep();
-	 energy_hits += 1;
-	 }
-	 if (hit->GetTime() > 0)
-	 {
-	 time += hit->GetTime();
-	 timeVsq += hit->GetTime() * hit->GetTime();
-	 time_hits += 1;
-	 }
-	 }
-	 time = time / time_hits;
-	 timeVsq = std::sqrt(timeVsq / time_hits - time * time);
-	 analysisManager->FillNtupleDColumn(kDim * iDet + 0, time / s);
-	 analysisManager->FillNtupleDColumn(kDim * iDet + 1, timeVsq / s);
-	 analysisManager->FillNtupleDColumn(kDim * iDet + 2, eDepE / MeV);
-	 analysisManager->FillNtupleDColumn(kDim * iDet + 3, eDepP / MeV);
-
-	 if (time_hits != 0)
-	 any_hit = true;
-
-	 }
-	 if (any_hit)
-	 analysisManager->AddNtupleRow();
-	 */
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

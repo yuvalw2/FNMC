@@ -47,14 +47,14 @@ G4ThreadLocal G4Allocator<ScintHit>* ScintHitAllocator;
 
 ScintHit::ScintHit()
 : G4VHit(), 
-  fID(-1), fEdep(0.),fTime(0.),fPDGCode(0)
+  fID(-1), fEdep(0.),fTime(0.),fPDGCode(0), fTrackID(-1)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 ScintHit::ScintHit(G4int ID)
 : G4VHit(), 
-  fID(ID), fEdep(0.),fTime(0.),fPDGCode(0)
+  fID(ID), fEdep(0.),fTime(0.),fPDGCode(0), fTrackID(-1)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -69,7 +69,7 @@ ScintHit::ScintHit(const ScintHit &right)
   fID(right.fID),
   fEdep(right.fEdep),
   fTime(right.fTime),
-fPDGCode(right.fPDGCode)
+fPDGCode(right.fPDGCode), fTrackID(right.fTrackID)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -81,6 +81,7 @@ const ScintHit& ScintHit::operator=(const ScintHit
   fEdep = right.fEdep;
   fTime=right.fTime;
   fPDGCode=right.fPDGCode;
+  fTrackID = right.fTrackID;
   return *this;
 }
 

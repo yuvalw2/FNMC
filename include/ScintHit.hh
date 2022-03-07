@@ -61,10 +61,6 @@ class ScintHit : public G4VHit
     
     inline void *operator new(size_t);
     inline void operator delete(void *aHit);
-    
-    
-    void SetID(G4int z) {fID=z;}
-    G4int GetID() const { return fID; }
 
     void SetEdep(G4double de) { fEdep = de; }
     void AddEdep(G4double de) { fEdep += de; }
@@ -76,12 +72,16 @@ class ScintHit : public G4VHit
     void SetPDGCode(G4int c) { fPDGCode = c; }
     G4double GetPDGCode() const { return fPDGCode; }
 
+    void SetTrackID(G4int id) { fTrackID = id; }
+    G4double GetTrackID() const { return fTrackID; }
+
     
   private:
     G4int fID;
     G4double fEdep;
     G4double fTime;
     G4int fPDGCode;
+    G4int fTrackID;
 };
 
 using ScintHitsCollection = G4THitsCollection<ScintHit>;

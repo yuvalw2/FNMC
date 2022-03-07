@@ -38,6 +38,9 @@
 #include "G4Positron.hh"
 #include "G4Alpha.hh"
 #include "G4RunManager.hh"
+#include "B1Analysis.hh"
+#include "G4Alpha.hh"
+#include "G4SystemOfUnits.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 StackingAction::StackingAction()
@@ -61,15 +64,24 @@ G4ClassificationOfNewTrack StackingAction::ClassifyNewTrack(const G4Track *track
 	}
 
 	auto particle = track->GetDefinition();
-	if(track->GetParentID() ==1&&particle==G4Alpha::Alpha())
-		G4RunManager::GetRunManager()->AbortEvent();
+	if (track->GetParentID() == 1
+			&& (particle == G4Neutron::Neutron() || particle == G4Gamma::Gamma()
+					|| particle == G4Alpha::Alpha()))
+	{
 
-	if (particle == G4Neutron::Neutron() || particle == G4Gamma::Gamma()
-			|| particle == G4Proton::Proton() || particle == G4Electron::Electron()
-			|| particle == G4Positron::Positron())
 		return fUrgent;
-	else
-		return fKill;
+
+	}
+	/*
+	 if (track->GetParentID() >=3 || particle == G4Alpha::Alpha()||particle == G4Electron::Electron())
+	 {
+
+	 return fKill;
+
+	 }
+	 */
+	return fKill;
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

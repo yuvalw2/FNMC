@@ -73,29 +73,9 @@ void ScintSD::Initialize(G4HCofThisEvent *hce)
 
 G4bool ScintSD::ProcessHits(G4Step *step, G4TouchableHistory*)
 {
-	/*
-	 bool save = false;
-	 auto edep = step->GetTotalEnergyDeposit();
-	 if (edep == 0.)
-	 return true;
 
-	 auto touchable = step->GetPreStepPoint()->GetTouchable();
-	 auto physical = touchable->GetVolume();
-	 auto copyNo = physical->GetCopyNo();
-
-
-
-	 hit->SetEdep(step->GetTotalEnergyDeposit());
-	 auto preStepPoint = step->GetPreStepPoint();
-	 if (step->GetTrack()->GetParentID() == 1 && step->GetDeltaEnergy() != 0)
-	 hit->SetTime(preStepPoint->GetLocalTime());
-	 else
-	 hit->SetTime(-1.0 * s);
-	 hit->SetID(copyNo);
-
-	 */
 	if (step->GetTrack()->GetParentID() != 1)
-		return true;
+		return false;
 	auto hit = new ScintHit();
 	hit->SetEdep(
 			step->GetPreStepPoint()->GetKineticEnergy()
@@ -109,9 +89,6 @@ G4bool ScintSD::ProcessHits(G4Step *step, G4TouchableHistory*)
 	//G4cout<<particle_def->GetParticleName()<<G4endl;
 	for (auto it = seconderies->begin(); it != seconderies->end(); ++it)
 	{
-		//G4cout<<(*it)->GetParticleDefinition()->GetParticleName()<<G4endl;
-		//if(particle_def==G4Neutron::Neutron())
-		//G4cout<<particle_def->GetParticleName()<<G4endl;
 
 		if ((*it)->GetParticleDefinition() == G4Proton::Proton()
 				&& particle_def == G4Neutron::Neutron())
@@ -124,9 +101,10 @@ G4bool ScintSD::ProcessHits(G4Step *step, G4TouchableHistory*)
 
 	G4int PDGEcode = particle_def->GetPDGEncoding();
 	hit->SetPDGCode(PDGEcode);
-	if (hit->GetEdep() / keV > 0.01 && keep_pulse)
-	{
 
+	if (hit->GetEdep() / keV > 0.1 && keep_pulse)
+	{
+		hit->SetTrackID(step->GetTrack()->GetTrackID());
 		hit->SetTime(step->GetPreStepPoint()->GetLocalTime());
 		fHitsCollection->insert(hit);
 	}
